@@ -145,8 +145,8 @@ function renderBrandSolid(width, height, rank, platform, color, gradient, isLigh
   const platX = divX + 2 + gapDivToPlat;
   const pillW = platX + platVec.width + padRight;
 
-  const pillX = Math.round((600 - pillW) / 2);
-  const pillY = 32;
+  const pillX = 28;
+  const pillY = 28;
   const midY = pillY + pillH / 2;
 
   const g1 = gradient ? gradient[0] : color;
@@ -646,7 +646,9 @@ module.exports = async function handler(req, res) {
       .toBuffer();
 
     res.setHeader('Content-Type', 'image/jpeg');
-    res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     return res.status(200).send(compositedBuffer);
 
   } catch (error) {
