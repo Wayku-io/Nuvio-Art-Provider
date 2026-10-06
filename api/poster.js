@@ -681,15 +681,16 @@ function generateSvgBadge(width, height, rank, platform, color, gradient, isLigh
     case 'cinema-minimal':
       return renderCinemaMinimal(width, height, rank, platform, color);
     case 'neon-notch':
-    default:
       return renderNeonNotch(width, height, rank, platform, color);
+    default:
+      return renderBrandLogo(width, height, rank, platform, color, gradient, isLight);
   }
 }
 
 module.exports = async function handler(req, res) {
   try {
     const id = req.query.id || req.query.imdb_id || req.query.tmdb_id;
-    const style = req.query.style || 'brand-solid';
+    const style = req.query.style || 'brand-logo';
 
     if (!id) {
       return res.status(400).send('Missing parameter "id"');
