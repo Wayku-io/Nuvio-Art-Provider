@@ -604,7 +604,7 @@ function generateSvgBadge(width, height, rank, platform, color, gradient, isLigh
 module.exports = async function handler(req, res) {
   try {
     const id = req.query.id || req.query.imdb_id || req.query.tmdb_id;
-    const style = req.query.style || 'neon-notch';
+    const style = req.query.style || 'brand-solid';
 
     if (!id) {
       return res.status(400).send('Missing parameter "id"');
