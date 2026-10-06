@@ -346,6 +346,13 @@
             <button class="btn-option" data-style="cinema-minimal">10. 🎬 Studio Minimal</button>
           </div>
         </div>
+
+        <div class="control-group">
+          <span class="control-label">Preset Spécial 11</span>
+          <div class="btn-group" id="style-group-3">
+            <button class="btn-option" data-style="brand-logo" style="border: 1px solid #6366f1; background: rgba(99, 102, 241, 0.15); color: #fff;">11. ⭐ Brand Solid + Logo</button>
+          </div>
+        </div>
       </div>
 
       <div class="style-hint" id="style-description">
@@ -384,7 +391,8 @@
       'gradient-vibrant': '💡 <strong>7. Ultra Gradient (Nouveau)</strong> : Dégradé hyper saturé et dynamique avec reflet supérieur glossy pour un look très premium.',
       'corner-tag': '💡 <strong>8. Corner Tag (Nouveau)</strong> : Étiquette moderne en coin avec angles doux arrondis (rx=16), SANS l\'effet biseauté du ruban !',
       'glass-frost': '💡 <strong>9. Frost Glass (Nouveau)</strong> : Verre givré clair semi-lumineux style Vision Pro avec contour blanc éclatant.',
-      'cinema-minimal': '💡 <strong>10. Studio Minimal (Nouveau)</strong> : Badge rectangulaire compact épuré avec liseré studio et rang mis en valeur.'
+      'cinema-minimal': '💡 <strong>10. Studio Minimal (Nouveau)</strong> : Badge rectangulaire compact épuré avec liseré studio et rang mis en valeur.',
+      'brand-logo': '💡 <strong>11. Brand Solid + Logo Officiel (Nouveau)</strong> : Copie exacte du Preset 2 Brand Solid, mais avec les vrais logos vectorisés blancs de Netflix, Prime Video, Apple TV, Disney+, HBO Max et Paramount+ à la place du texte !'
     };
 
     let currentPlatform = 'netflix';
@@ -414,8 +422,8 @@
       });
     });
 
-    // Style listeners (across both groups 1 and 2)
-    const allStyleButtons = document.querySelectorAll('#style-group-1 .btn-option, #style-group-2 .btn-option');
+    // Style listeners (across all groups 1, 2 and 3)
+    const allStyleButtons = document.querySelectorAll('#style-group-1 .btn-option, #style-group-2 .btn-option, #style-group-3 .btn-option');
     allStyleButtons.forEach(btn => {
       btn.addEventListener('click', () => {
         allStyleButtons.forEach(b => b.classList.remove('active'));

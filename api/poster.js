@@ -3,6 +3,7 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 const vectors = require('../assets/vectors-clean.json');
+const officialLogos = require('../assets/official-logos.json');
 
 // Auto-load local .env if present
 try {
@@ -597,9 +598,70 @@ function renderCinemaMinimal(width, height, rank, platform, color) {
   `);
 }
 
+/* ------------------------------------------------------------------------- */
+/* 11. BRAND SOLID AVEC LOGO OFFICIEL (Preset 11 - Logos blancs / sombres)   */
+/* ------------------------------------------------------------------------- */
+function renderBrandLogo(width, height, rank, platform, color, gradient, isLight) {
+  const vH = Math.round(height * 600 / width);
+  const hashVec = vectors.hash;
+  const numVec = vectors.numbers[rank] || vectors.numbers['1'];
+  const logoData = officialLogos[platform] || officialLogos['NETFLIX'];
+
+  const pillH = 88;
+  const rx = pillH / 2;
+  const padLeft = 28;
+  const gapRankToDiv = 20;
+  const gapDivToLogo = 22;
+  const padRight = 32;
+
+  const hashX = padLeft;
+  const numX = hashX + hashVec.width + 4;
+  const divX = numX + numVec.width + gapRankToDiv;
+  const logoX = divX + 2 + gapDivToLogo;
+  const pillW = logoX + logoData.width + padRight;
+
+  const pillX = 28;
+  const pillY = 28;
+  const midY = pillY + pillH / 2;
+  const logoY = Math.round(midY - logoData.height / 2);
+
+  const g1 = gradient ? gradient[0] : color;
+  const g2 = gradient ? gradient[1] : color;
+
+  const textColor = isLight ? '#090b11' : '#ffffff';
+  const strokeColor = isLight ? '#090b11' : '#ffffff';
+  const logoHref = isLight ? logoData.darkBase64 : logoData.whiteBase64;
+
+  return Buffer.from(`
+    <svg width="${width}" height="${height}" viewBox="0 0 600 ${vH}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+      <defs>
+        <filter id="logoPillShadow" x="-30%" y="-30%" width="160%" height="180%">
+          <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#000000" flood-opacity="0.85"/>
+        </filter>
+        <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="${g1}"/>
+          <stop offset="100%" stop-color="${g2}"/>
+        </linearGradient>
+      </defs>
+
+      <g filter="url(#logoPillShadow)">
+        <rect x="${pillX}" y="${pillY}" width="${pillW}" height="${pillH}" rx="${rx}"
+              fill="url(#logoGrad)" stroke="${strokeColor}" stroke-opacity="${isLight ? '0.2' : '0.35'}" stroke-width="2" />
+        <g transform="translate(${pillX + hashX}, ${midY + 11})"><path d="${hashVec.pathData}" fill="${textColor}" fill-opacity="0.85" /></g>
+        <g transform="translate(${pillX + numX}, ${midY + 18})"><path d="${numVec.pathData}" fill="${textColor}" /></g>
+        <rect x="${pillX + divX}" y="${midY - 18}" width="2" height="36" rx="1" fill="${textColor}" fill-opacity="0.3" />
+        <image href="${logoHref}" xlink:href="${logoHref}" x="${pillX + logoX}" y="${logoY}" width="${logoData.width}" height="${logoData.height}" />
+      </g>
+    </svg>
+  `);
+}
+
 /* Dispatcher */
 function generateSvgBadge(width, height, rank, platform, color, gradient, isLight, style = 'neon-notch') {
   switch (style) {
+    case 'brand-logo':
+    case 'brand-official-logo':
+      return renderBrandLogo(width, height, rank, platform, color, gradient, isLight);
     case 'brand-solid':
       return renderBrandSolid(width, height, rank, platform, color, gradient, isLight);
     case 'split-ticket':
