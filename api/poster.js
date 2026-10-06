@@ -45,107 +45,7 @@ let catalogIndex = null;
 let lastFetchTime = 0;
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
-// In-memory cache for TMDB artwork lookups (TTL 24 hours)
-const tmdbArtworkCache = new Map();
-const TMDB_CACHE_TTL = 24 * 60 * 60 * 1000;
 
-async function getTmdbArtwork(id, typeHint, apiKey) {
-  if (!apiKey) return null;
-
-  const now = Date.now();
-  const cached = tmdbArtworkCache.get(id);
-  if (cached && (now - cached.time) < TMDB_CACHE_TTL) {
-    return cached.data;
-  }
-
-  try {
-    let tmdbId = null;
-    let mediaType = (typeHint === 'series' || typeHint === 'tv') ? 'tv' : (typeHint === 'movie' ? 'movie' : null);
-    let defaultPosterPath = null;
-
-    // 1. Resolve IMDb ID -> TMDB ID
-    if (id.startsWith('tt')) {
-      const findUrl = `https://api.themoviedb.org/3/find/${id}?api_key=${apiKey}&external_source=imdb_id`;
-      const findRes = await axios.get(findUrl, { timeout: 6000 });
-      const data = findRes.data || {};
-      const movie = data.movie_results?.[0];
-      const tv = data.tv_results?.[0];
-
-      if (movie) {
-        tmdbId = movie.id;
-        mediaType = 'movie';
-        defaultPosterPath = movie.poster_path;
-      } else if (tv) {
-        tmdbId = tv.id;
-        mediaType = 'tv';
-        defaultPosterPath = tv.poster_path;
-      }
-    } else if (id.startsWith('tmdb:') || /^\d+$/.test(id)) {
-      tmdbId = id.replace(/^tmdb:/, '');
-      if (!mediaType) mediaType = 'movie';
-    }
-
-    if (!tmdbId || !mediaType) {
-      return null;
-    }
-
-    // 2. Fetch images (posters & logos)
-    const imagesUrl = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/images?api_key=${apiKey}&include_image_language=fr,en,null`;
-    const imgRes = await axios.get(imagesUrl, { timeout: 6000 });
-    const { posters = [], logos = [] } = imgRes.data || {};
-
-    // 3. Find best textless poster
-    const textlessPosters = posters
-      .filter(p => !p.iso_639_1)
-      .sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0));
-
-    // 4. Find best logo (Priority: French 'fr' > English 'en' > first available)
-    const frenchLogos = logos
-      .filter(l => l.iso_639_1 === 'fr')
-      .sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0));
-
-    const englishLogos = logos
-      .filter(l => l.iso_639_1 === 'en' || !l.iso_639_1)
-      .sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0));
-
-    const allLogos = [...logos].sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0));
-
-    const bestLogo = frenchLogos[0] || englishLogos[0] || allLogos[0] || null;
-
-    let selectedPoster = null;
-    let selectedLogo = null;
-
-    if (bestLogo) {
-      // If we have a clear logo, prefer textless poster
-      selectedLogo = bestLogo.file_path;
-      if (textlessPosters.length > 0) {
-        selectedPoster = textlessPosters[0].file_path;
-      } else {
-        const frPosters = posters.filter(p => p.iso_639_1 === 'fr');
-        const enPosters = posters.filter(p => p.iso_639_1 === 'en');
-        selectedPoster = frPosters[0]?.file_path || enPosters[0]?.file_path || posters[0]?.file_path || defaultPosterPath;
-      }
-    } else {
-      // NO logo found on TMDB: use poster with text so title is not missing!
-      const frPosters = posters.filter(p => p.iso_639_1 === 'fr');
-      const enPosters = posters.filter(p => p.iso_639_1 === 'en');
-      selectedPoster = frPosters[0]?.file_path || enPosters[0]?.file_path || posters[0]?.file_path || defaultPosterPath;
-      selectedLogo = null;
-    }
-
-    const result = {
-      posterUrl: selectedPoster ? `https://image.tmdb.org/t/p/w780${selectedPoster}` : null,
-      logoUrl: selectedLogo ? `https://image.tmdb.org/t/p/w500${selectedLogo}` : null
-    };
-
-    tmdbArtworkCache.set(id, { time: now, data: result });
-    return result;
-
-  } catch (err) {
-    console.error(`TMDB lookup error for ${id}:`, err.message);
-    return null;
-  }
-}
 
 async function getOrUpdateIndex() {
   const now = Date.now();
@@ -727,9 +627,7 @@ function generateSvgBadge(width, height, rank, platform, color, gradient, isLigh
 module.exports = async function handler(req, res) {
   try {
     const id = req.query.id || req.query.imdb_id || req.query.tmdb_id;
-    const typeHint = req.query.type;
     const style = req.query.style || 'brand-solid';
-    const apiKey = process.env.TMDB_API_KEY;
 
     if (!id) {
       return res.status(400).send('Missing parameter "id"');
@@ -740,133 +638,56 @@ module.exports = async function handler(req, res) {
     // Check if item is in one of the 12 Top 10 catalogs
     const index = await getOrUpdateIndex();
     const itemInfo = index.get(cleanId);
-    const isTop10 = !!itemInfo;
 
-    let basePosterUrl = null;
-    let logoUrl = null;
-
-    // 1. Try to fetch high-res TMDB artwork (textless poster + official logo)
-    if (apiKey) {
-      const artwork = await getTmdbArtwork(cleanId, typeHint, apiKey);
-      if (artwork) {
-        basePosterUrl = artwork.posterUrl;
-        logoUrl = artwork.logoUrl;
-      }
+    // 1. NON TOP 10 : Redirection HTTP 302 instantanée vers l'affiche officielle TMDB / Cinemeta
+    if (!itemInfo) {
+      const redirectUrl = `https://images.metahub.space/poster/medium/${cleanId}/img`;
+      res.writeHead(302, {
+        'Location': redirectUrl,
+        'Cache-Control': 'public, max-age=86400, s-maxage=604800'
+      });
+      return res.end();
     }
 
-    // 2. Fallbacks if TMDB artwork lookup didn't yield a poster
-    if (!basePosterUrl) {
-      if (isTop10 && itemInfo.posterUrl) {
-        basePosterUrl = itemInfo.posterUrl;
-      } else if (cleanId.startsWith('tt')) {
-        basePosterUrl = `https://images.metahub.space/poster/medium/${cleanId}/img`;
-      }
-    }
+    // 2. DANS LE TOP 10 : Affiche officielle TMDB du catalogue + Badge officiel en haut à gauche
+    const basePosterUrl = itemInfo.posterUrl || `https://images.metahub.space/poster/medium/${cleanId}/img`;
 
-    if (!basePosterUrl) {
-      return res.status(404).send('Poster not found');
-    }
-
-    // 3. Download base poster
     const posterRes = await axios.get(basePosterUrl, {
       responseType: 'arraybuffer',
       timeout: 10000
     });
-    const posterBuffer = Buffer.from(posterRes.data);
+    const imageBuffer = Buffer.from(posterRes.data);
 
-    // Standard high-res canvas dimensions (2:3 aspect ratio)
-    const W = 680;
-    const H = 1020;
+    const meta = await sharp(imageBuffer).metadata();
+    const width = meta.width || 600;
+    const height = meta.height || 900;
 
-    const compositeLayers = [];
+    const svgBadge = generateSvgBadge(
+      width,
+      height,
+      itemInfo.rank,
+      itemInfo.platform,
+      itemInfo.color,
+      itemInfo.gradient,
+      itemInfo.isLight,
+      style
+    );
 
-    // 4. If we have a transparent studio logo, composite it at the bottom with a subtle vignette
-    if (logoUrl) {
-      try {
-        const logoRes = await axios.get(logoUrl, {
-          responseType: 'arraybuffer',
-          timeout: 8000
-        });
-        const rawLogoBuffer = Buffer.from(logoRes.data);
-
-        const maxLogoW = Math.round(W * 0.74); // ~503px
-        const maxLogoH = Math.round(H * 0.20); // ~204px
-
-        const resizedLogo = await sharp(rawLogoBuffer)
-          .resize({
-            width: maxLogoW,
-            height: maxLogoH,
-            fit: 'inside',
-            withoutEnlargement: false
-          })
-          .toBuffer();
-
-        const logoMeta = await sharp(resizedLogo).metadata();
-        const logoW = logoMeta.width;
-        const logoH = logoMeta.height;
-        const logoLeft = Math.round((W - logoW) / 2);
-        const bottomMargin = Math.round(H * 0.08); // 8% bottom margin
-        const logoTop = Math.round(H - logoH - bottomMargin);
-
-        // Bottom vignette gradient to ensure contrast
-        const vignetteSvg = Buffer.from(`
-          <svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="vignetteGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#000000" stop-opacity="0" />
-                <stop offset="45%" stop-color="#000000" stop-opacity="0.30" />
-                <stop offset="80%" stop-color="#000000" stop-opacity="0.75" />
-                <stop offset="100%" stop-color="#000000" stop-opacity="0.92" />
-              </linearGradient>
-            </defs>
-            <rect x="0" y="${Math.round(H * 0.50)}" width="${W}" height="${Math.round(H * 0.50)}" fill="url(#vignetteGrad)" />
-          </svg>
-        `);
-
-        compositeLayers.push({ input: vignetteSvg, top: 0, left: 0 });
-        compositeLayers.push({ input: resizedLogo, top: logoTop, left: logoLeft });
-      } catch (err) {
-        console.error(`Failed to process logo for ${cleanId}:`, err.message);
-      }
-    }
-
-    // 5. If item is in Top 10 catalogs, add our rank & platform badge in top-left
-    if (isTop10) {
-      const svgBadge = generateSvgBadge(
-        W,
-        H,
-        itemInfo.rank,
-        itemInfo.platform,
-        itemInfo.color,
-        itemInfo.gradient,
-        itemInfo.isLight,
-        style
-      );
-      compositeLayers.push({ input: svgBadge, top: 0, left: 0 });
-    }
-
-    // 6. Final Sharp render
-    const compositedBuffer = await sharp(posterBuffer)
-      .resize(W, H, { fit: 'cover' })
-      .composite(compositeLayers)
+    const compositedBuffer = await sharp(imageBuffer)
+      .composite([{ input: svgBadge, top: 0, left: 0 }])
       .jpeg({ quality: 92, mozjpeg: true })
       .toBuffer();
 
     res.setHeader('Content-Type', 'image/jpeg');
 
-    // 7. Caching headers
     if (req.query.nocache === '1' || req.query.preview === '1') {
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
-    } else if (isTop10) {
+    } else {
       // Top 10: rankings update periodically (daily)
       // Cache 6h in browser, 12h on Vercel CDN, background revalidation
       res.setHeader('Cache-Control', 'public, max-age=21600, s-maxage=43200, stale-while-revalidate=86400');
-    } else {
-      // Non-top catalog items: movie artwork is permanent
-      // Cache 1 year on Vercel Edge CDN (immutable)
-      res.setHeader('Cache-Control', 'public, max-age=31536000, s-maxage=31536000, immutable');
     }
 
     return res.status(200).send(compositedBuffer);
