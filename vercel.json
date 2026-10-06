@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/poster/:type/:id",
+      "destination": "/api/poster?id=:id&type=:type"
+    },
+    {
+      "source": "/poster/:id",
+      "destination": "/api/poster?id=:id"
+    }
+  ]
+}

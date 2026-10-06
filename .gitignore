@@ -1,0 +1,5 @@
+node_modules
+.vercel
+*.log
+output_test_handler.jpg
+test_badge.jpg

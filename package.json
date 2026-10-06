@@ -1,0 +1,17 @@
+{
+  "name": "nuvio-art-provider",
+  "version": "1.0.0",
+  "description": "Dynamic Art Provider for Stremio / Nuvio Top 10 badges",
+  "main": "api/poster.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "axios": "^1.20.0",
+    "sharp": "^0.35.5"
+  }
+}
