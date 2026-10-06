@@ -1,7 +1,6 @@
 const axios = require('axios');
 const sharp = require('sharp');
-const path = require('path');
-const vectors = require('../assets/vectors.json');
+const vectors = require('../assets/vectors-outfit.json');
 
 const MANIFEST_BASE = 'https://aiometadatafortheweebs.midnightignite.me/stremio/1609e9ee-c194-445e-b25c-410e88954386';
 
@@ -44,7 +43,6 @@ async function getOrUpdateIndex() {
           if (!item.id) return;
           const cleanId = item.id.trim();
 
-          // If not already in index, add it
           if (!newIndex.has(cleanId)) {
             newIndex.set(cleanId, {
               rank: idx + 1,
@@ -69,48 +67,80 @@ async function getOrUpdateIndex() {
 }
 
 function generateSvgBadge(width, height, rank, platform, color) {
-  const rankVec = vectors.ranks[rank] || vectors.ranks['1'];
+  const virtualHeight = Math.round(height * 600 / width);
+
+  const hashVec = vectors.hash;
+  const numVec = vectors.numbers[rank] || vectors.numbers['1'];
   const platVec = vectors.platforms[platform] || vectors.platforms['NETFLIX'];
 
-  const pillX = 24;
-  const pillY = 24;
-  const pillH = 44;
+  // Dimensions designed for 3x TV readability
+  const pillH = 88;
   const rx = pillH / 2;
+  const padLeft = 24;
+  const dotR = 11;
+  const gapDotToRank = 20;
+  const gapRankToDiv = 18;
+  const gapDivToPlat = 18;
+  const padRight = 30;
 
-  const dotCx = pillX + 16;
-  const dotCy = pillY + pillH / 2;
+  const dotX = padLeft + dotR;
+  const hashX = dotX + dotR + gapDotToRank;
+  const numX = hashX + hashVec.width + 2;
+  const divX = numX + numVec.width + gapRankToDiv;
+  const platX = divX + 2 + gapDivToPlat;
+  const pillW = platX + platVec.width + padRight;
 
-  const rankX = pillX + 28;
-  const rankY = pillY + pillH / 2 + 7;
+  // Center horizontally like iPhone notch / Dynamic Island
+  const pillX = Math.round((600 - pillW) / 2);
+  const pillY = 32;
 
-  const platX = rankX + rankVec.width + 10;
-  const platY = pillY + pillH / 2 + 4.5;
-
-  const pillWidth = (platX - pillX) + platVec.width + 16;
+  const midY = pillY + pillH / 2;
+  const hashY = midY + 11;
+  const numY = midY + 17;
+  const platY = midY + 9;
 
   return Buffer.from(`
-    <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+    <svg width="${width}" height="${height}" viewBox="0 0 600 ${virtualHeight}" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000000" flood-opacity="0.75"/>
+        <!-- Deep drop shadow for TV distance readability -->
+        <filter id="notchShadow" x="-30%" y="-30%" width="160%" height="180%">
+          <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000000" flood-opacity="0.85"/>
+          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.5"/>
         </filter>
+        <filter id="dotGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="4" result="blur" />
+        </filter>
+        <linearGradient id="glassBorder" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45"/>
+          <stop offset="100%" stop-color="#ffffff" stop-opacity="0.12"/>
+        </linearGradient>
       </defs>
-      <g filter="url(#shadow)">
-        <!-- Glassmorphism dark pill -->
-        <rect x="${pillX}" y="${pillY}" width="${pillWidth}" height="${pillH}" rx="${rx}"
-              fill="#0c0e18" fill-opacity="0.88" stroke="rgba(255,255,255,0.22)" stroke-width="1.5" />
+
+      <g filter="url(#notchShadow)">
+        <!-- Centered Glassmorphic Pill -->
+        <rect x="${pillX}" y="${pillY}" width="${pillW}" height="${pillH}" rx="${rx}"
+              fill="#090b14" fill-opacity="0.90" stroke="url(#glassBorder)" stroke-width="2" />
         
-        <!-- Platform Color Dot -->
-        <circle cx="${dotCx}" cy="${dotCy}" r="5.5" fill="${color}" />
-        
-        <!-- Vectorized Rank Path (Zero font dependency) -->
-        <g transform="translate(${rankX}, ${rankY})">
-          <path d="${rankVec.pathData}" fill="#ffffff" />
+        <!-- Platform Color Glow + Dot -->
+        <circle cx="${pillX + dotX}" cy="${midY}" r="${dotR + 4}" fill="${color}" opacity="0.45" filter="url(#dotGlow)" />
+        <circle cx="${pillX + dotX}" cy="${midY}" r="${dotR}" fill="${color}" />
+
+        <!-- Hash symbol in Outfit font -->
+        <g transform="translate(${pillX + hashX}, ${hashY})">
+          <path d="${hashVec.pathData}" fill="${color}" />
         </g>
-        
-        <!-- Vectorized Platform Path (Zero font dependency) -->
-        <g transform="translate(${platX}, ${platY})">
-          <path d="${platVec.pathData}" fill="#cbd5e1" />
+
+        <!-- Rank number in Outfit ExtraBold -->
+        <g transform="translate(${pillX + numX}, ${numY})">
+          <path d="${numVec.pathData}" fill="#ffffff" />
+        </g>
+
+        <!-- Vertical Glass Divider -->
+        <rect x="${pillX + divX}" y="${midY - 18}" width="2" height="36" rx="1" fill="#ffffff" fill-opacity="0.22" />
+
+        <!-- Platform Name in Outfit ExtraBold -->
+        <g transform="translate(${pillX + platX}, ${platY})">
+          <path d="${platVec.pathData}" fill="#f1f5f9" />
         </g>
       </g>
     </svg>
@@ -147,7 +177,7 @@ module.exports = async function handler(req, res) {
     const width = meta.width || 600;
     const height = meta.height || 900;
 
-    // Generate badge SVG using pure vector paths
+    // Generate badge SVG (3x centered dynamic notch style)
     const svgBadge = generateSvgBadge(
       width,
       height,
@@ -159,7 +189,7 @@ module.exports = async function handler(req, res) {
     // Composite badge onto poster
     const compositedBuffer = await sharp(imageBuffer)
       .composite([{ input: svgBadge, top: 0, left: 0 }])
-      .jpeg({ quality: 90, mozjpeg: true })
+      .jpeg({ quality: 92, mozjpeg: true })
       .toBuffer();
 
     // Cache headers for Edge CDN & Stremio
