@@ -1,6 +1,6 @@
 const axios = require('axios');
 const sharp = require('sharp');
-const vectors = require('../assets/vectors-outfit.json');
+const vectors = require('../assets/vectors-clean.json');
 
 const MANIFEST_BASE = 'https://aiometadatafortheweebs.midnightignite.me/stremio/1609e9ee-c194-445e-b25c-410e88954386';
 
@@ -9,8 +9,8 @@ const CATALOG_CONFIGS = [
   { id: 'flixpatrol.netflix.fr.series', type: 'series', platform: 'NETFLIX', color: '#E50914' },
   { id: 'flixpatrol.amazon-prime.fr.movie', type: 'movie', platform: 'PRIME VIDEO', color: '#00A8E1' },
   { id: 'flixpatrol.amazon-prime.fr.series', type: 'series', platform: 'PRIME VIDEO', color: '#00A8E1' },
-  { id: 'flixpatrol.apple-tv.fr.movie', type: 'movie', platform: 'APPLE TV+', color: '#A2AAAD' },
-  { id: 'flixpatrol.apple-tv.fr.series', type: 'series', platform: 'APPLE TV+', color: '#A2AAAD' },
+  { id: 'flixpatrol.apple-tv.fr.movie', type: 'movie', platform: 'APPLE TV', color: '#E2E8F0' },
+  { id: 'flixpatrol.apple-tv.fr.series', type: 'series', platform: 'APPLE TV', color: '#E2E8F0' },
   { id: 'flixpatrol.disney.fr.movie', type: 'movie', platform: 'DISNEY+', color: '#113CCF' },
   { id: 'flixpatrol.disney.fr.series', type: 'series', platform: 'DISNEY+', color: '#113CCF' },
   { id: 'flixpatrol.hbo-max.fr.movie', type: 'movie', platform: 'HBO MAX', color: '#9900EE' },
@@ -73,31 +73,31 @@ function generateSvgBadge(width, height, rank, platform, color) {
   const numVec = vectors.numbers[rank] || vectors.numbers['1'];
   const platVec = vectors.platforms[platform] || vectors.platforms['NETFLIX'];
 
-  // Dimensions designed for 3x TV readability
+  // Dimensions designed for high TV readability
   const pillH = 88;
   const rx = pillH / 2;
   const padLeft = 24;
   const dotR = 11;
-  const gapDotToRank = 20;
+  const gapDotToRank = 18;
   const gapRankToDiv = 18;
   const gapDivToPlat = 18;
   const padRight = 30;
 
   const dotX = padLeft + dotR;
   const hashX = dotX + dotR + gapDotToRank;
-  const numX = hashX + hashVec.width + 2;
+  const numX = hashX + hashVec.width + 4;
   const divX = numX + numVec.width + gapRankToDiv;
   const platX = divX + 2 + gapDivToPlat;
   const pillW = platX + platVec.width + padRight;
 
-  // Center horizontally like iPhone notch / Dynamic Island
+  // Center horizontally at the top like iPhone notch / Dynamic Island
   const pillX = Math.round((600 - pillW) / 2);
   const pillY = 32;
 
   const midY = pillY + pillH / 2;
   const hashY = midY + 11;
-  const numY = midY + 17;
-  const platY = midY + 9;
+  const numY = midY + 18;
+  const platY = midY + 10;
 
   return Buffer.from(`
     <svg width="${width}" height="${height}" viewBox="0 0 600 ${virtualHeight}" xmlns="http://www.w3.org/2000/svg">
@@ -125,22 +125,22 @@ function generateSvgBadge(width, height, rank, platform, color) {
         <circle cx="${pillX + dotX}" cy="${midY}" r="${dotR + 4}" fill="${color}" opacity="0.45" filter="url(#dotGlow)" />
         <circle cx="${pillX + dotX}" cy="${midY}" r="${dotR}" fill="${color}" />
 
-        <!-- Hash symbol in Outfit font -->
+        <!-- White Hash symbol -->
         <g transform="translate(${pillX + hashX}, ${hashY})">
-          <path d="${hashVec.pathData}" fill="${color}" />
+          <path d="${hashVec.pathData}" fill="#ffffff" fill-opacity="0.85" />
         </g>
 
-        <!-- Rank number in Outfit ExtraBold -->
+        <!-- White Rank number (ExtraBold) -->
         <g transform="translate(${pillX + numX}, ${numY})">
           <path d="${numVec.pathData}" fill="#ffffff" />
         </g>
 
         <!-- Vertical Glass Divider -->
-        <rect x="${pillX + divX}" y="${midY - 18}" width="2" height="36" rx="1" fill="#ffffff" fill-opacity="0.22" />
+        <rect x="${pillX + divX}" y="${midY - 18}" width="2" height="36" rx="1" fill="#ffffff" fill-opacity="0.25" />
 
-        <!-- Platform Name in Outfit ExtraBold -->
+        <!-- Platform Name in Bold White -->
         <g transform="translate(${pillX + platX}, ${platY})">
-          <path d="${platVec.pathData}" fill="#f1f5f9" />
+          <path d="${platVec.pathData}" fill="#ffffff" />
         </g>
       </g>
     </svg>
@@ -177,7 +177,7 @@ module.exports = async function handler(req, res) {
     const width = meta.width || 600;
     const height = meta.height || 900;
 
-    // Generate badge SVG (3x centered dynamic notch style)
+    // Generate badge SVG
     const svgBadge = generateSvgBadge(
       width,
       height,
