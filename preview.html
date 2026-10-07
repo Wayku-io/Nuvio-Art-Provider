@@ -323,40 +323,18 @@
         </div>
       </div>
 
-      <!-- Row 2: 10 Styles -->
+      <!-- Row 2: Preset Unique Glass Blade 3D -->
       <div class="controls-row">
         <div class="control-group">
-          <span class="control-label">Presets Originaux (1-5)</span>
-          <div class="btn-group" id="style-group-1">
-            <button class="btn-option active" data-style="neon-notch">1. ⚡ Neon Notch</button>
-            <button class="btn-option" data-style="brand-solid">2. 🎨 Brand Solid</button>
-            <button class="btn-option" data-style="split-ticket">3. 🎟️ Split Ticket</button>
-            <button class="btn-option" data-style="corner-ribbon">4. 📐 Corner Ribbon</button>
-            <button class="btn-option" data-style="netflix-giant">5. 📺 Netflix 3D</button>
-          </div>
-        </div>
-
-        <div class="control-group">
-          <span class="control-label">Nouveaux Presets (6-10)</span>
-          <div class="btn-group" id="style-group-2">
-            <button class="btn-option" data-style="corner-capsule">6. 💊 Corner Capsule</button>
-            <button class="btn-option" data-style="gradient-vibrant">7. 🔥 Ultra Gradient</button>
-            <button class="btn-option" data-style="corner-tag">8. 🏷️ Corner Tag (Sans Biseau)</button>
-            <button class="btn-option" data-style="glass-frost">9. ❄️ Frost Glass</button>
-            <button class="btn-option" data-style="cinema-minimal">10. 🎬 Studio Minimal</button>
-          </div>
-        </div>
-
-        <div class="control-group">
-          <span class="control-label">Preset Spécial 11</span>
-          <div class="btn-group" id="style-group-3">
-            <button class="btn-option" data-style="brand-logo" style="border: 1px solid #6366f1; background: rgba(99, 102, 241, 0.15); color: #fff;">11. ⭐ Brand Solid + Logo</button>
+          <span class="control-label">Badge de Rendu</span>
+          <div class="btn-group" id="style-group">
+            <button class="btn-option active" data-style="glass-blade" style="border: 1px solid #38bdf8; background: rgba(56, 189, 248, 0.25); color: #38bdf8; font-weight: 800; box-shadow: 0 0 16px rgba(56, 189, 248, 0.35); padding: 8px 18px; font-size: 14px;">💎 Glass Blade 3D (Design Officiel)</button>
           </div>
         </div>
       </div>
 
       <div class="style-hint" id="style-description">
-        💡 <strong>1. Neon Notch</strong> : Notch centrée avec liseré néon lumineux & halo de couleur. Ressort avec éclat sur affiches sombres.
+        💡 <strong>Glass Blade 3D (Design Officiel)</strong> : Plaquette de verre fumé incrustée à gauche (taille agrandie +25%), pointe tranchante acérée en haut à droite avec éclat spéculaire, néon modulé et intégration de tes vrais logos officiels !
       </div>
     </div>
 
@@ -382,22 +360,12 @@
     };
 
     const STYLE_DESCRIPTIONS = {
-      'neon-notch': '💡 <strong>1. Neon Notch</strong> : Notch centrée avec liseré néon lumineux & halo de couleur. Ressort avec éclat même sur les affiches 100% noires.',
-      'brand-solid': '💡 <strong>2. Brand Solid</strong> : Pilule pleine avec le dégradé officiel de la marque. Texte noir sur Apple TV pour contraste maximal.',
-      'split-ticket': '💡 <strong>3. Split Ticket</strong> : Double compartiment cinéma : bloc de couleur à gauche pour le rang + bloc sombre pour la plateforme.',
-      'corner-ribbon': '💡 <strong>4. Corner Ribbon</strong> : Ruban biseauté dans le coin supérieur gauche avec couleur vive de la marque.',
-      'netflix-giant': '💡 <strong>5. Netflix 3D</strong> : Chiffre géant blanc détouré avec contour noir et ombre profonde en bas à gauche.',
-      'corner-capsule': '💡 <strong>6. Corner Capsule (Nouveau)</strong> : Capsule flottante dans le coin supérieur gauche avec liseré néon. Ne masque pas le centre de l\'affiche.',
-      'gradient-vibrant': '💡 <strong>7. Ultra Gradient (Nouveau)</strong> : Dégradé hyper saturé et dynamique avec reflet supérieur glossy pour un look très premium.',
-      'corner-tag': '💡 <strong>8. Corner Tag (Nouveau)</strong> : Étiquette moderne en coin avec angles doux arrondis (rx=16), SANS l\'effet biseauté du ruban !',
-      'glass-frost': '💡 <strong>9. Frost Glass (Nouveau)</strong> : Verre givré clair semi-lumineux style Vision Pro avec contour blanc éclatant.',
-      'cinema-minimal': '💡 <strong>10. Studio Minimal (Nouveau)</strong> : Badge rectangulaire compact épuré avec liseré studio et rang mis en valeur.',
-      'brand-logo': '💡 <strong>11. Brand Solid + Logo Officiel (Nouveau)</strong> : Copie exacte du Preset 2 Brand Solid, mais avec les vrais logos vectorisés blancs de Netflix, Prime Video, Apple TV, Disney+, HBO Max et Paramount+ à la place du texte !'
+      'glass-blade': '💡 <strong>Glass Blade 3D (Design Officiel)</strong> : Plaquette de verre fumé incrustée à gauche (taille agrandie +25%), pointe tranchante acérée en haut à droite avec éclat spéculaire, néon modulé et intégration de tes vrais logos officiels !'
     };
 
     let currentPlatform = 'netflix';
     let currentType = 'movie';
-    let currentStyle = 'neon-notch';
+    let currentStyle = 'glass-blade';
 
     const grid = document.getElementById('poster-grid');
     const styleDesc = document.getElementById('style-description');
@@ -422,12 +390,10 @@
       });
     });
 
-    // Style listeners (across all groups 1, 2 and 3)
-    const allStyleButtons = document.querySelectorAll('#style-group-1 .btn-option, #style-group-2 .btn-option, #style-group-3 .btn-option');
+    // Style listener (unique)
+    const allStyleButtons = document.querySelectorAll('#style-group .btn-option');
     allStyleButtons.forEach(btn => {
       btn.addEventListener('click', () => {
-        allStyleButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
         currentStyle = btn.dataset.style;
         styleDesc.innerHTML = STYLE_DESCRIPTIONS[currentStyle] || '';
         refreshImages();

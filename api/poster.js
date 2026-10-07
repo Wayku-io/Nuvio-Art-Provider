@@ -618,12 +618,14 @@ function renderBrandLogo(width, height, rank, platform, color, gradient, isLight
   const numX = hashX + hashVec.width + 4;
   const divX = numX + numVec.width + gapRankToDiv;
   const logoX = divX + 2 + gapDivToLogo;
-  const pillW = logoX + logoData.width + padRight;
+  const logoH = 38;
+  const logoW = Math.round(logoH * (logoData.width / logoData.height));
+  const pillW = logoX + logoW + padRight;
 
   const pillX = 28;
   const pillY = 28;
   const midY = pillY + pillH / 2;
-  const logoY = Math.round(midY - logoData.height / 2);
+  const logoY = Math.round(midY - logoH / 2);
 
   const g1 = gradient ? gradient[0] : color;
   const g2 = gradient ? gradient[1] : color;
@@ -650,15 +652,401 @@ function renderBrandLogo(width, height, rank, platform, color, gradient, isLight
         <g transform="translate(${pillX + hashX}, ${midY + 11})"><path d="${hashVec.pathData}" fill="${textColor}" fill-opacity="0.85" /></g>
         <g transform="translate(${pillX + numX}, ${midY + 18})"><path d="${numVec.pathData}" fill="${textColor}" /></g>
         <rect x="${pillX + divX}" y="${midY - 18}" width="2" height="36" rx="1" fill="${textColor}" fill-opacity="0.3" />
-        <image href="${logoHref}" xlink:href="${logoHref}" x="${pillX + logoX}" y="${logoY}" width="${logoData.width}" height="${logoData.height}" />
+        <image href="${logoHref}" xlink:href="${logoHref}" x="${pillX + logoX}" y="${logoY}" width="${logoW}" height="${logoH}" />
       </g>
     </svg>
   `);
 }
 
+/* ------------------------------------------------------------------------- */
+/* 12. SILO BLADE / NÉON 3D (Badge incrusté coin gauche, coupure bordure)    */
+/* ------------------------------------------------------------------------- */
+const SILO_NEON_COLORS = {
+  'NETFLIX': { neon: '#FF1E27', core: '#FFB8BC' },
+  'HBO MAX': { neon: '#9B4DFF', core: '#E2C8FF' },
+  'PRIME VIDEO': { neon: '#00A8E1', core: '#BAE6FD' },
+  'DISNEY+': { neon: '#0084FF', core: '#BAE0FD' },
+  'PARAMOUNT+': { neon: '#0064FF', core: '#BFDBFE' },
+  'APPLE TV': { neon: '#7ED0E0', core: '#E0F7FA' }
+};
+
+function renderSiloBlade(width, height, rank, platform) {
+  const vH = Math.round(height * 600 / width);
+  const numVec = vectors.numbers[String(rank)] || vectors.numbers['1'];
+  const logoData = officialLogos[platform] || officialLogos['APPLE TV'];
+  const cfg = SILO_NEON_COLORS[platform] || { neon: '#7ED0E0', core: '#E0F7FA' };
+  const neonColor = cfg.neon;
+  const coreColor = cfg.core;
+
+  const badgeY = 36;
+  const badgeH = 80;
+  const midY = badgeY + badgeH / 2;
+  const badgeBottom = badgeY + badgeH;
+  const slantOffset = 38;
+
+  const numScale = 1.25;
+  const numWidth = Math.round((numVec.width || 25) * numScale);
+  const numBaselineY = Math.round(midY + 18 * numScale);
+
+  let logoW, logoH;
+  if (platform === 'NETFLIX') {
+    logoH = 46;
+    logoW = Math.round(logoH * (logoData.width / logoData.height));
+  } else if (platform === 'APPLE TV') {
+    logoH = 40;
+    logoW = Math.round(logoH * (logoData.width / logoData.height));
+  } else if (platform === 'PRIME VIDEO') {
+    logoH = 32;
+    logoW = Math.round(logoH * (logoData.width / logoData.height));
+  } else if (platform === 'DISNEY+') {
+    logoH = 40;
+    logoW = Math.round(logoH * (logoData.width / logoData.height));
+  } else if (platform === 'HBO MAX') {
+    logoH = 32;
+    logoW = Math.round(logoH * (logoData.width / logoData.height));
+  } else if (platform === 'PARAMOUNT+') {
+    logoH = 42;
+    logoW = Math.round(logoH * (logoData.width / logoData.height));
+  } else {
+    logoH = 38;
+    logoW = Math.round(logoH * (logoData.width / logoData.height));
+  }
+
+  const padLeft = 28;
+  const numX = padLeft;
+  const gapNumToDiv = 18;
+  const divX = numX + numWidth + gapNumToDiv;
+  const gapDivToLogo = 18;
+  const logoX = divX + 2 + gapDivToLogo;
+  const logoY = Math.round(midY - logoH / 2);
+  const padRight = 36;
+
+  const badgeTopW = logoX + logoW + padRight;
+  const badgeBottomW = badgeTopW - slantOffset;
+
+  const rTop = 16;
+  const rBottom = 16;
+
+  const pTopStart = `0,${badgeY}`;
+  const pTopRight1 = `${badgeTopW - rTop},${badgeY}`;
+  const pTopRightCorner = `${badgeTopW},${badgeY} ${badgeTopW - 5},${badgeY + 13}`;
+  const pSlantEnd = `${badgeBottomW + 5},${badgeBottom - 13}`;
+  const pBottomRightCorner = `${badgeBottomW},${badgeBottom} ${badgeBottomW - rBottom},${badgeBottom}`;
+  const pBottomLeft = `0,${badgeBottom}`;
+
+  const bgPathD = `M ${pTopStart} L ${pTopRight1} Q ${pTopRightCorner} L ${pSlantEnd} Q ${pBottomRightCorner} L ${pBottomLeft} Z`;
+  const strokePathD = `M ${pTopStart} L ${pTopRight1} Q ${pTopRightCorner} L ${pSlantEnd} Q ${pBottomRightCorner} L ${pBottomLeft}`;
+  const gleamPathD = `M ${pTopStart} L ${badgeTopW - rTop},${badgeY} Q ${pTopRightCorner}`;
+
+  const logoHref = logoData.whiteBase64;
+
+  const svg = `
+    <svg width="${width}" height="${height}" viewBox="0 0 600 ${vH}" overflow="hidden" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+      <defs>
+        <filter id="siloShadow" x="-30%" y="-40%" width="170%" height="200%">
+          <feDropShadow dx="0" dy="16" stdDeviation="16" flood-color="#000000" flood-opacity="0.95"/>
+          <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.7"/>
+        </filter>
+
+        <filter id="siloOuterGlow" x="-20%" y="-30%" width="150%" height="180%">
+          <feGaussianBlur stdDeviation="7" />
+        </filter>
+        <filter id="siloMidGlow" x="-20%" y="-30%" width="150%" height="180%">
+          <feGaussianBlur stdDeviation="2.5" />
+        </filter>
+
+        <linearGradient id="siloChromeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#FFFFFF" />
+          <stop offset="25%" stop-color="#F8FAFC" />
+          <stop offset="52%" stop-color="#94A3B8" />
+          <stop offset="78%" stop-color="#CBD5E1" />
+          <stop offset="100%" stop-color="#475569" />
+        </linearGradient>
+
+        <linearGradient id="siloDividerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.85"/>
+          <stop offset="50%" stop-color="#CBD5E1" stop-opacity="0.45"/>
+          <stop offset="100%" stop-color="#64748B" stop-opacity="0.15"/>
+        </linearGradient>
+
+        <linearGradient id="siloGlassBg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#0c121d" stop-opacity="0.92"/>
+          <stop offset="50%" stop-color="#070b12" stop-opacity="0.90"/>
+          <stop offset="100%" stop-color="#030508" stop-opacity="0.95"/>
+        </linearGradient>
+
+        <linearGradient id="siloEdgeGlow" x1="100%" y1="0%" x2="0%" y2="0%">
+          <stop offset="0%" stop-color="${neonColor}" stop-opacity="0.35"/>
+          <stop offset="35%" stop-color="${neonColor}" stop-opacity="0.12"/>
+          <stop offset="100%" stop-color="${neonColor}" stop-opacity="0"/>
+        </linearGradient>
+
+        <linearGradient id="siloTopGleam" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.9"/>
+          <stop offset="60%" stop-color="#FFFFFF" stop-opacity="0.35"/>
+          <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+        </linearGradient>
+
+        <filter id="siloNumShadow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="1.5" dy="3.5" stdDeviation="2.5" flood-color="#000000" flood-opacity="0.95"/>
+        </filter>
+      </defs>
+
+      <g filter="url(#siloShadow)">
+        <!-- 1. Background Glass Fill -->
+        <path d="${bgPathD}" fill="url(#siloGlassBg)" />
+        <path d="${bgPathD}" fill="url(#siloEdgeGlow)" />
+
+        <!-- 2. Outer Neon Glow (No left stroke) -->
+        <path d="${strokePathD}" fill="none" stroke="${neonColor}" stroke-width="7" stroke-opacity="0.55" filter="url(#siloOuterGlow)" stroke-linecap="butt" />
+
+        <!-- 3. Mid Neon Glow (No left stroke) -->
+        <path d="${strokePathD}" fill="none" stroke="${neonColor}" stroke-width="3.5" stroke-opacity="0.8" filter="url(#siloMidGlow)" stroke-linecap="butt" />
+
+        <!-- 4. Sharp Crisp Core Line (No left stroke) -->
+        <path d="${strokePathD}" fill="none" stroke="${coreColor || '#FFFFFF'}" stroke-width="2" stroke-opacity="0.95" stroke-linecap="butt" />
+
+        <!-- 5. Top Rim Specular Gleam -->
+        <path d="${gleamPathD}" fill="none" stroke="url(#siloTopGleam)" stroke-width="1.8" stroke-linecap="butt" />
+
+        <!-- 6. 3D Chrome Rank Number -->
+        <g transform="translate(${numX}, ${numBaselineY}) scale(${numScale})">
+          <path d="${numVec.pathData}" fill="#1e293b" transform="translate(1.5, 2.5)" filter="url(#siloNumShadow)" />
+          <path d="${numVec.pathData}" fill="url(#siloChromeGrad)" />
+          <path d="${numVec.pathData}" fill="none" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.85" />
+        </g>
+
+        <!-- 7. Chrome Vertical Divider -->
+        <rect x="${divX}" y="${midY - 18}" width="2" height="36" rx="1" fill="url(#siloDividerGrad)" />
+
+        <!-- 8. Official Platform Logo -->
+        <image href="${logoHref}" xlink:href="${logoHref}" x="${logoX}" y="${logoY}" width="${logoW}" height="${logoH}" />
+      </g>
+    </svg>
+  `;
+
+  return Buffer.from(svg);
+}
+
+/* ------------------------------------------------------------------------- */
+/* 13. GLASS BLADE 3D (Pointe tranchante, halo modulé & marge aérée)        */
+/* ------------------------------------------------------------------------- */
+function renderGlassBlade(width, height, rank, platform) {
+  const vH = Math.round(height * 600 / width);
+  const numVec = vectors.numbers[String(rank)] || vectors.numbers['1'];
+  const logoData = officialLogos[platform] || officialLogos['APPLE TV'];
+  const cfg = SILO_NEON_COLORS[platform] || { neon: '#7ED0E0', core: '#E0F7FA' };
+  const neonColor = cfg.neon;
+  const coreColor = cfg.core;
+
+  const badgeY = 36;
+  const badgeH = 100;
+  const midY = badgeY + badgeH / 2;
+  const badgeBottom = badgeY + badgeH;
+  const slantOffset = 48;
+
+  // 1. Rank sizing (+25%)
+  const isDoubleDigit = String(rank).length > 1;
+  const numScale = isDoubleDigit ? 1.30 : 1.55;
+  const numWidth = Math.round((numVec.width || 25) * numScale);
+  const numBaselineY = Math.round(midY + (isDoubleDigit ? 19 : 23));
+
+  // 2. Logo sizing (+25%)
+  let logoW, logoH;
+  if (platform === 'NETFLIX') {
+    logoH = 58;
+    logoW = Math.round(logoH * (logoData.width / logoData.height));
+  } else if (platform === 'APPLE TV') {
+    logoH = 50;
+    logoW = Math.round(logoH * (logoData.width / logoData.height));
+  } else if (platform === 'PRIME VIDEO') {
+    logoH = 40;
+    logoW = Math.round(logoH * (logoData.width / logoData.height));
+  } else if (platform === 'DISNEY+') {
+    logoH = 50;
+    logoW = Math.round(logoH * (logoData.width / logoData.height));
+  } else if (platform === 'HBO MAX') {
+    logoH = 40;
+    logoW = Math.round(logoH * (logoData.width / logoData.height));
+  } else if (platform === 'PARAMOUNT+') {
+    logoH = 52;
+    logoW = Math.round(logoH * (logoData.width / logoData.height));
+  } else {
+    logoH = 48;
+    logoW = Math.round(logoH * (logoData.width / logoData.height));
+  }
+
+  // 3. Layout with COMFORTABLE padding after logo (+25%)
+  const padLeft = 35;
+  const numX = padLeft;
+  const gapNumToDiv = 22;
+  const divX = numX + numWidth + gapNumToDiv;
+  const gapDivToLogo = 22;
+  const logoX = divX + 2.5 + gapDivToLogo;
+  const logoY = Math.round(midY - logoH / 2);
+
+  // Generous breathing room: 68px at the top so slant never touches logo
+  const padRight = 68;
+  const badgeTopW = logoX + logoW + padRight;
+  const badgeBottomW = badgeTopW - slantOffset;
+
+  // 4. Geometry with sharp pointed apex (+25%)
+  const rTop = 4.2;
+  const rBottom = 20;
+  const pApexX = badgeTopW;
+  const pApexY = badgeY;
+
+  const bgPathD = `M 0,${badgeY} L ${pApexX - rTop},${pApexY} Q ${pApexX},${pApexY} ${pApexX - 1.8},${pApexY + 5} L ${badgeBottomW + 5},${badgeBottom - 15} Q ${badgeBottomW},${badgeBottom} ${badgeBottomW - rBottom},${badgeBottom} L 0,${badgeBottom} Z`;
+
+  // Segment 1: Top line (fades from left x=0, explodes in intensity towards apex)
+  const topStrokeD = `M 0,${badgeY} L ${pApexX - rTop},${pApexY}`;
+
+  // Segment 2: Apex corner & Slant down to bottom curve (brightest at apex, rich neon down the blade)
+  const slantStrokeD = `M ${pApexX - rTop},${pApexY} Q ${pApexX},${pApexY} ${pApexX - 1.8},${pApexY + 5} L ${badgeBottomW + 5},${badgeBottom - 15} Q ${badgeBottomW},${badgeBottom} ${badgeBottomW - rBottom},${badgeBottom}`;
+
+  // Segment 3: Bottom line (starts at bottom curve, fades to transparent at left x=0)
+  const bottomStrokeD = `M ${badgeBottomW - rBottom},${badgeBottom} L 0,${badgeBottom}`;
+
+  const logoHref = logoData.whiteBase64;
+
+  const svg = `
+    <svg width="${width}" height="${height}" viewBox="0 0 600 ${vH}" overflow="hidden" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+      <defs>
+        <!-- Soft deep shadow behind glass plate -->
+        <filter id="glassShadow" x="-30%" y="-40%" width="170%" height="200%">
+          <feDropShadow dx="0" dy="16" stdDeviation="16" flood-color="#000000" flood-opacity="0.95"/>
+          <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.7"/>
+        </filter>
+
+        <!-- Glow filters -->
+        <filter id="apexBloomFilt" x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur stdDeviation="7" />
+        </filter>
+        <filter id="edgeGlowFilt" x="-20%" y="-30%" width="150%" height="180%">
+          <feGaussianBlur stdDeviation="5" />
+        </filter>
+        <filter id="coreGlowFilt" x="-20%" y="-30%" width="150%" height="180%">
+          <feGaussianBlur stdDeviation="2" />
+        </filter>
+
+        <!-- Dynamic modulated gradients -->
+        <!-- TOP STROKE: Fades out towards left (x=0), explodes in brightness at apex (x=badgeTopW) -->
+        <linearGradient id="topStrokeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="${neonColor}" stop-opacity="0.1" />
+          <stop offset="35%" stop-color="${neonColor}" stop-opacity="0.5" />
+          <stop offset="70%" stop-color="${neonColor}" stop-opacity="0.85" />
+          <stop offset="88%" stop-color="${coreColor}" stop-opacity="1" />
+          <stop offset="100%" stop-color="#FFFFFF" stop-opacity="1" />
+        </linearGradient>
+
+        <!-- SLANT STROKE: Pure white at apex, tapering down the blade -->
+        <linearGradient id="slantStrokeGrad" x1="100%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#FFFFFF" stop-opacity="1" />
+          <stop offset="18%" stop-color="${coreColor}" stop-opacity="0.95" />
+          <stop offset="60%" stop-color="${neonColor}" stop-opacity="0.85" />
+          <stop offset="100%" stop-color="${neonColor}" stop-opacity="0.6" />
+        </linearGradient>
+
+        <!-- BOTTOM STROKE: Fades out towards left (x=0) -->
+        <linearGradient id="bottomStrokeGrad" x1="100%" y1="0%" x2="0%" y2="0%">
+          <stop offset="0%" stop-color="${neonColor}" stop-opacity="0.7" />
+          <stop offset="40%" stop-color="${neonColor}" stop-opacity="0.45" />
+          <stop offset="75%" stop-color="${neonColor}" stop-opacity="0.18" />
+          <stop offset="100%" stop-color="${neonColor}" stop-opacity="0.04" />
+        </linearGradient>
+
+        <!-- Glass plate body -->
+        <linearGradient id="glassBodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#090f1c" stop-opacity="0.86"/>
+          <stop offset="50%" stop-color="#05080f" stop-opacity="0.92"/>
+          <stop offset="85%" stop-color="#08101e" stop-opacity="0.84"/>
+          <stop offset="100%" stop-color="#0d182b" stop-opacity="0.75"/>
+        </linearGradient>
+
+        <!-- Glass internal reflection sheen -->
+        <linearGradient id="glassInnerSheen" x1="100%" y1="0%" x2="0%" y2="0%">
+          <stop offset="0%" stop-color="${neonColor}" stop-opacity="0.28"/>
+          <stop offset="35%" stop-color="${neonColor}" stop-opacity="0.06"/>
+          <stop offset="100%" stop-color="${neonColor}" stop-opacity="0"/>
+        </linearGradient>
+
+        <!-- 3D Chrome numeral -->
+        <linearGradient id="chromeNumGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#FFFFFF" />
+          <stop offset="26%" stop-color="#F8FAFC" />
+          <stop offset="52%" stop-color="#94A3B8" />
+          <stop offset="78%" stop-color="#CBD5E1" />
+          <stop offset="100%" stop-color="#475569" />
+        </linearGradient>
+
+        <!-- Divider -->
+        <linearGradient id="glassDividerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.85"/>
+          <stop offset="50%" stop-color="#CBD5E1" stop-opacity="0.45"/>
+          <stop offset="100%" stop-color="#64748B" stop-opacity="0.15"/>
+        </linearGradient>
+
+        <filter id="numDepthShadow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="1.5" dy="3.5" stdDeviation="2.5" flood-color="#000000" flood-opacity="0.95"/>
+        </filter>
+      </defs>
+
+      <g filter="url(#glassShadow)">
+        <!-- 1. Glass Plate Base Fill -->
+        <path d="${bgPathD}" fill="url(#glassBodyGrad)" />
+        <path d="${bgPathD}" fill="url(#glassInnerSheen)" />
+
+        <!-- 2. Outer Modulated Neon Glow (Soft) -->
+        <path d="${topStrokeD}" fill="none" stroke="url(#topStrokeGrad)" stroke-width="7" stroke-opacity="0.5" filter="url(#edgeGlowFilt)" stroke-linecap="butt" />
+        <path d="${slantStrokeD}" fill="none" stroke="url(#slantStrokeGrad)" stroke-width="7" stroke-opacity="0.6" filter="url(#edgeGlowFilt)" stroke-linecap="butt" />
+        <path d="${bottomStrokeD}" fill="none" stroke="url(#bottomStrokeGrad)" stroke-width="6" stroke-opacity="0.38" filter="url(#edgeGlowFilt)" stroke-linecap="butt" />
+
+        <!-- 3. Mid Core Neon Glow -->
+        <path d="${topStrokeD}" fill="none" stroke="url(#topStrokeGrad)" stroke-width="3" stroke-opacity="0.85" filter="url(#coreGlowFilt)" stroke-linecap="butt" />
+        <path d="${slantStrokeD}" fill="none" stroke="url(#slantStrokeGrad)" stroke-width="3.5" stroke-opacity="0.9" filter="url(#coreGlowFilt)" stroke-linecap="butt" />
+        <path d="${bottomStrokeD}" fill="none" stroke="url(#bottomStrokeGrad)" stroke-width="2.5" stroke-opacity="0.7" filter="url(#coreGlowFilt)" stroke-linecap="butt" />
+
+        <!-- 4. Sharp Razor Core Lines -->
+        <path d="${topStrokeD}" fill="none" stroke="url(#topStrokeGrad)" stroke-width="1.8" stroke-linecap="butt" />
+        <path d="${slantStrokeD}" fill="none" stroke="url(#slantStrokeGrad)" stroke-width="2" stroke-linecap="butt" />
+        <path d="${bottomStrokeD}" fill="none" stroke="url(#bottomStrokeGrad)" stroke-width="1.6" stroke-linecap="butt" />
+
+        <!-- 5. Specular Apex Radiance (Natural Pointed Vertex) -->
+        <circle cx="${pApexX - 1.2}" cy="${pApexY + 1.2}" r="11" fill="${coreColor}" opacity="0.65" filter="url(#apexBloomFilt)" />
+        <circle cx="${pApexX - 1.2}" cy="${pApexY + 1.2}" r="3" fill="#FFFFFF" />
+
+        <!-- 6. 3D Chrome Rank Number -->
+        <g transform="translate(${numX}, ${numBaselineY}) scale(${numScale})">
+          <path d="${numVec.pathData}" fill="#0f172a" transform="translate(1.5, 2.5)" filter="url(#numDepthShadow)" />
+          <path d="${numVec.pathData}" fill="url(#chromeNumGrad)" />
+          <path d="${numVec.pathData}" fill="none" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.85" />
+        </g>
+
+        <!-- 7. Chrome Vertical Divider -->
+        <rect x="${divX}" y="${midY - 22.5}" width="2.5" height="45" rx="1.2" fill="url(#glassDividerGrad)" />
+
+        <!-- 8. Official Platform Logo (Directement depuis Logo officiels) -->
+        <image href="${logoHref}" xlink:href="${logoHref}" x="${logoX}" y="${logoY}" width="${logoW}" height="${logoH}" />
+      </g>
+    </svg>
+  `;
+
+  return Buffer.from(svg);
+}
+
 /* Dispatcher */
 function generateSvgBadge(width, height, rank, platform, color, gradient, isLight, style = 'neon-notch') {
   switch (style) {
+    case 'glass-blade':
+    case 'silo-glass':
+    case 'silo-refined':
+    case 'silo-speed':
+      return renderGlassBlade(width, height, rank, platform);
+    case 'silo-neon':
+    case 'neon-blade':
+    case 'silo-blade':
+    case 'neon-cutout':
+      return renderSiloBlade(width, height, rank, platform);
     case 'brand-logo':
     case 'brand-official-logo':
       return renderBrandLogo(width, height, rank, platform, color, gradient, isLight);
@@ -683,14 +1071,14 @@ function generateSvgBadge(width, height, rank, platform, color, gradient, isLigh
     case 'neon-notch':
       return renderNeonNotch(width, height, rank, platform, color);
     default:
-      return renderBrandLogo(width, height, rank, platform, color, gradient, isLight);
+      return renderGlassBlade(width, height, rank, platform);
   }
 }
 
 module.exports = async function handler(req, res) {
   try {
     const id = req.query.id || req.query.imdb_id || req.query.tmdb_id;
-    const style = req.query.style || 'brand-logo';
+    const style = req.query.style || 'glass-blade';
 
     if (!id) {
       return res.status(400).send('Missing parameter "id"');
