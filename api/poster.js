@@ -786,10 +786,6 @@ function renderSiloBlade(width, height, rank, platform) {
           <stop offset="60%" stop-color="#FFFFFF" stop-opacity="0.35"/>
           <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
         </linearGradient>
-
-        <filter id="siloNumShadow" x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="1.5" dy="3.5" stdDeviation="2.5" flood-color="#000000" flood-opacity="0.95"/>
-        </filter>
       </defs>
 
       <g filter="url(#siloShadow)">
@@ -809,9 +805,8 @@ function renderSiloBlade(width, height, rank, platform) {
         <!-- 5. Top Rim Specular Gleam -->
         <path d="${gleamPathD}" fill="none" stroke="url(#siloTopGleam)" stroke-width="1.8" stroke-linecap="butt" />
 
-        <!-- 6. 3D Chrome Rank Number -->
+        <!-- 6. Chrome Rank Number (A plat & centré) -->
         <g transform="translate(${numX}, ${numBaselineY}) scale(${numScale})">
-          <path d="${numVec.pathData}" fill="#1e293b" transform="translate(1.5, 2.5)" filter="url(#siloNumShadow)" />
           <path d="${numVec.pathData}" fill="url(#siloChromeGrad)" />
           <path d="${numVec.pathData}" fill="none" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.85" />
         </g>
@@ -849,7 +844,7 @@ function renderGlassBlade(width, height, rank, platform) {
   const isDoubleDigit = String(rank).length > 1;
   const numScale = isDoubleDigit ? 1.30 : 1.55;
   const numWidth = Math.round((numVec.width || 25) * numScale);
-  const numBaselineY = Math.round(midY + (isDoubleDigit ? 19 : 23));
+  const numBaselineY = Math.round(midY + 18.45 * numScale);
 
   // 2. Logo sizing (+25%)
   let logoW, logoH;
@@ -985,10 +980,6 @@ function renderGlassBlade(width, height, rank, platform) {
           <stop offset="50%" stop-color="#CBD5E1" stop-opacity="0.45"/>
           <stop offset="100%" stop-color="#64748B" stop-opacity="0.15"/>
         </linearGradient>
-
-        <filter id="numDepthShadow" x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="1.5" dy="3.5" stdDeviation="2.5" flood-color="#000000" flood-opacity="0.95"/>
-        </filter>
       </defs>
 
       <g filter="url(#glassShadow)">
@@ -1015,9 +1006,8 @@ function renderGlassBlade(width, height, rank, platform) {
         <circle cx="${pApexX - 1.2}" cy="${pApexY + 1.2}" r="11" fill="${coreColor}" opacity="0.65" filter="url(#apexBloomFilt)" />
         <circle cx="${pApexX - 1.2}" cy="${pApexY + 1.2}" r="3" fill="#FFFFFF" />
 
-        <!-- 6. 3D Chrome Rank Number -->
+        <!-- 6. Rank Number (Net & centré à plat) -->
         <g transform="translate(${numX}, ${numBaselineY}) scale(${numScale})">
-          <path d="${numVec.pathData}" fill="#0f172a" transform="translate(1.5, 2.5)" filter="url(#numDepthShadow)" />
           <path d="${numVec.pathData}" fill="url(#chromeNumGrad)" />
           <path d="${numVec.pathData}" fill="none" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.85" />
         </g>
